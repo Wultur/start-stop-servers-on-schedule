@@ -3,6 +3,7 @@ Description: >
     This template is used to create EventBridge Schedules
     to start and stop servers with custom tag at exactly time.
     Created by Pavel Malchauskas 20.12.2022
+    Used UTC+2 Europe/Warsaw Time zone
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -164,7 +165,8 @@ Resources:
       Description: Lambda to start/stop servers on schedule
       FunctionName: !Sub ${AWS::StackName}-start-stop-servers-lambda
       Handler: index.lambda_handler
-      Runtime: python3.9
+      Timeout: 4
+      Runtime: python3.11
       MemorySize: 128
       Role: !GetAtt LambdaRole.Arn
 
@@ -185,8 +187,7 @@ Resources:
                       "Action": "sts:AssumeRole",
                       "Condition": {
                           "StringEquals": {
-                              "aws:SourceAccount": "${AWS::AccountId}",
-                              "aws:SourceArn": "arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/${AWS::StackName}-start-server-with-tag-${tag}"
+                              "aws:SourceAccount": "${AWS::AccountId}"
                           }
                       }
                   }
@@ -211,8 +212,7 @@ Resources:
                       "Action": "sts:AssumeRole",
                       "Condition": {
                           "StringEquals": {
-                              "aws:SourceAccount": "${AWS::AccountId}",
-                              "aws:SourceArn": "arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/${AWS::StackName}-stop-server-with-tag-${tag}"
+                              "aws:SourceAccount": "${AWS::AccountId}"
                           }
                       }
                   }
@@ -260,6 +260,7 @@ Resources:
         - minutes: !Ref StartMinutes
           hour: !Ref StartHour
           days: !Ref DaysToStartStop
+      ScheduleExpressionTimezone: "Europe/Warsaw"
       Target: 
         Arn: !GetAtt LambdaStartStop.Arn
         Input: '{ "ActionWithServers" : "start" }'
@@ -279,6 +280,7 @@ Resources:
         - minutes: !Ref StopMinutes
           hour: !Ref StopHour
           days: !Ref DaysToStartStop
+      ScheduleExpressionTimezone: "Europe/Warsaw"
       Target: 
         Arn: !GetAtt LambdaStartStop.Arn
         Input: '{ "ActionWithServers" : "stop" }'
